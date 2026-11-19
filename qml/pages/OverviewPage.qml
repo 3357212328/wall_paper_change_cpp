@@ -314,20 +314,11 @@ Flickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "小贴士：可将任意图片文件夹直接拖拽至上方预览卡片或设置页；最小化到系统托盘后，程序会自动释放界面显存与缓存，保持极低内存占用。"
+                    text: "小贴士：可将任意图片文件夹直接拖拽至上方预览卡片或设置页；点击右上角关闭按钮即可最小化到系统托盘，自动释放界面显存与缓存，保持极低内存占用。"
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
-                }
-
-                AccentButton {
-                    text: "最小化到托盘"
-                    iconName: "tray"
-                    variant: "secondary"
-                    buttonHeight: 32
-                    fontSize: 12
-                    onClicked: appController.hideToTray(true)
                 }
             }
         }

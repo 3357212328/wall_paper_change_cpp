@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(AuraPaper VERSION 1.0.0 LANGUAGES CXX)
+project(AuraPaper VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,9 +18,7 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS
     Quick
     QuickControls2
     QuickLayouts
-    Widgets
     Network
-    Svg
 )
 
 qt_standard_project_setup(REQUIRES 6.8)
@@ -42,6 +40,8 @@ set(APP_SOURCES
     src/platform/LockScreenSetter.cpp
     src/platform/ImageFitRenderer.h
     src/platform/ImageFitRenderer.cpp
+    src/platform/NativeSystemTray.h
+    src/platform/NativeSystemTray.cpp
     src/platform/WindowsUtils.h
     src/platform/WindowsUtils.cpp
     resources/app.rc
@@ -85,6 +85,7 @@ qt_add_qml_module(AuraPaper
         qml/components/CustomTitleBar.qml
         qml/components/SidebarNav.qml
         qml/components/ToastOverlay.qml
+        qml/components/TrayMenuPopup.qml
         qml/pages/OverviewPage.qml
         qml/pages/ChannelSettingsPage.qml
         qml/pages/SettingsPage.qml
@@ -94,7 +95,6 @@ qt_add_resources(AuraPaper "app_icons"
     PREFIX "/AuraPaper"
     FILES
         resources/icons/app_icon.png
-        resources/icons/app_icon.svg
 )
 
 target_include_directories(AuraPaper PRIVATE
@@ -108,9 +108,7 @@ target_link_libraries(AuraPaper PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::QuickLayouts
-    Qt6::Widgets
     Qt6::Network
-    Qt6::Svg
     dwmapi
     ole32
     psapi

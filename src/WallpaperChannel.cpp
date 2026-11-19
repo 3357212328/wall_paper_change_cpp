@@ -8,7 +8,6 @@
 #include <QDateTime>
 #include <QDir>
 #include <QDirIterator>
-#include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QMetaObject>
@@ -392,11 +391,10 @@ void WallpaperChannel::browseFolder() {
     const QString initialDir = (!m_folderPath.isEmpty() && QDir(m_folderPath).exists())
                                    ? m_folderPath
                                    : QDir::homePath();
-    const QString selected = QFileDialog::getExistingDirectory(
-        nullptr,
+    const QString selected = WindowsUtils::pickFolderNative(
+        QGuiApplication::focusWindow(),
         QStringLiteral("选择%1文件夹").arg(title()),
-        initialDir,
-        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        initialDir);
     if (!selected.isEmpty()) {
         setFolderPath(selected);
     }
@@ -708,6 +706,7 @@ void WallpaperChannel::applyImageInternal(const QString &filePath, bool recordHi
                 emit self->currentImageChanged();
                 emit self->lastSwitchTimeChanged();
                 emit self->settingsDirty();
+                emit self->wallpaperSwitched();
 
                 if (resetTimer && self->m_running) {
                     self->restartSwitchTimer();

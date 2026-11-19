@@ -31,7 +31,9 @@ Item {
         if (variant === "secondary") {
             return mouseArea.containsMouse ? Theme.cardHoverBg : Theme.surfaceElevated
         }
-        return mouseArea.containsMouse ? Theme.surfaceElevated : "transparent"
+        return mouseArea.containsMouse
+               ? Theme.surfaceElevated
+               : Qt.rgba(Theme.surfaceElevated.r, Theme.surfaceElevated.g, Theme.surfaceElevated.b, 0.0)
     }
 
     readonly property color fgColor: {

@@ -1,13 +1,11 @@
 #pragma once
 
 #include "WallpaperChannel.h"
+#include "platform/NativeSystemTray.h"
 
-#include <QAction>
-#include <QMenu>
 #include <QObject>
 #include <QPointer>
 #include <QSettings>
-#include <QSystemTrayIcon>
 #include <QTimer>
 
 class QQmlEngine;
@@ -55,14 +53,21 @@ public:
     void setPauseOnFullscreen(bool pause);
 
     double memoryUsageMB() const { return m_memoryUsageMB; }
-    QString appVersion() const { return QStringLiteral("1.0.0"); }
+    QString appVersion() const { return QStringLiteral("1.0.1"); }
 
     Q_INVOKABLE void showMainWindow();
     Q_INVOKABLE void hideToTray(bool showBalloonIfFirst = true);
+    Q_INVOKABLE void handleCloseRequest();
     Q_INVOKABLE void quitApplication();
     Q_INVOKABLE void trimMemoryNow();
     Q_INVOKABLE void onWindowVisibilityChanged(bool visible);
     Q_INVOKABLE QString formatDuration(int totalSeconds) const;
+    Q_INVOKABLE void registerTrayPopup(QQuickWindow *popup);
+    Q_INVOKABLE void prepareTrayPopupWindow(QQuickWindow *popup);
+    Q_INVOKABLE void onTrayPopupClosed();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
     void darkThemeChanged();
@@ -73,14 +78,15 @@ signals:
     void memoryUsageChanged();
     void toastMessage(const QString &message, bool isError);
     void requestWindowReveal();
+    void requestTrayMenu(int x, int y);
 
 private:
     void loadAllSettings();
     void scheduleSaveSettings();
     void saveAllSettings();
-    void updateTrayMenuLabels();
     void updateMemoryUsage();
     void releaseIdleResources();
+    void performAutoCacheRelease();
 
     QSettings m_settings;
     WallpaperChannel m_desktopChannel;
@@ -92,21 +98,21 @@ private:
     bool m_minimizeToTrayOnClose = true;
     bool m_pauseOnFullscreen = true;
     bool m_trayHintShown = false;
+    bool m_quitting = false;
 
     double m_memoryUsageMB = 0.0;
     int m_memTickCounter = 0;
 
     QPointer<QQuickWindow> m_window;
+    QPointer<QQuickWindow> m_trayPopup;
     QPointer<QQmlEngine> m_engine;
 
     QTimer m_uiTickTimer;
     QTimer m_saveDebounceTimer;
     QTimer m_trimDelayTimer;
+    QTimer m_autoCacheTimer;
 
-    QSystemTrayIcon *m_trayIcon = nullptr;
-    QMenu *m_trayMenu = nullptr;
-    QAction *m_actToggleDesktop = nullptr;
-    QAction *m_actToggleLock = nullptr;
+    NativeSystemTray *m_trayIcon = nullptr;
 };
 
 } // namespace AuraPaper

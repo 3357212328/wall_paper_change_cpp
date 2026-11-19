@@ -86,27 +86,50 @@ Rectangle {
             Layout.topMargin: 4
         }
 
-        // Navigation Items with animated sliding highlight
+        // Navigation Items with unified smooth hover glide & active pill
         Item {
+            id: navContainer
             Layout.fillWidth: true
             Layout.preferredHeight: root.navItems.length * 48
 
             readonly property int rowHeight: 48
+            property int hoveredIndex: -1
+            property int lastHoveredIndex: 0
 
-            // Sliding active pill background
+            // Layer 1: Unified gliding hover highlight (animates y & opacity, never color-to-transparent)
+            Rectangle {
+                id: hoverPill
+                x: 0
+                y: navContainer.lastHoveredIndex * navContainer.rowHeight + 3
+                width: parent.width
+                height: 42
+                radius: Theme.radiusMd
+                color: Theme.surfaceElevated
+                opacity: (navContainer.hoveredIndex >= 0 && navContainer.hoveredIndex !== root.currentIndex) ? 1.0 : 0.0
+
+                Behavior on y {
+                    enabled: hoverPill.opacity > 0.05
+                    NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                }
+            }
+
+            // Layer 2: Sliding active pill background
             Rectangle {
                 id: activeBg
                 x: 0
-                y: root.currentIndex * parent.rowHeight + 2
+                y: root.currentIndex * navContainer.rowHeight + 3
                 width: parent.width
                 height: 42
                 radius: Theme.radiusMd
                 color: root.currentIndex === 2 ? Theme.lockAccentSoft : Theme.accentSoft
 
                 Behavior on y {
-                    NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
                 }
-                Behavior on color { ColorAnimation { duration: 220 } }
+                Behavior on color { ColorAnimation { duration: 200 } }
 
                 // Glowing left accent pill
                 Rectangle {
@@ -117,10 +140,11 @@ Rectangle {
                     radius: 2
                     color: root.currentIndex === 2 ? Theme.lockAccent : Theme.accent
 
-                    Behavior on color { ColorAnimation { duration: 220 } }
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
             }
 
+            // Layer 3: Interactive button items
             Column {
                 anchors.fill: parent
                 spacing: 0
@@ -130,60 +154,60 @@ Rectangle {
 
                     Item {
                         width: parent.width
-                        height: 48
+                        height: navContainer.rowHeight
 
                         readonly property bool isSelected: index === root.currentIndex
+                        readonly property bool isHovered: navMouse.containsMouse
                         readonly property color itemAccent: index === 2 ? Theme.lockAccent : Theme.accent
                         readonly property bool channelActive: (modelData.badge === "desktop" && appController.desktopChannel.running)
                                                               || (modelData.badge === "lock" && appController.lockScreenChannel.running)
 
-                        Rectangle {
+                        Item {
                             anchors.fill: parent
-                            anchors.topMargin: 2
-                            anchors.bottomMargin: 4
-                            radius: Theme.radiusMd
-                            color: (!isSelected && navMouse.containsMouse) ? Theme.surfaceElevated : "transparent"
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
+                            scale: navMouse.pressed ? 0.97 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 18
-                            anchors.rightMargin: 12
-                            spacing: 11
+                            RowLayout {
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: (isHovered && !isSelected) ? 20 : 18
+                                width: parent.width - 30
+                                spacing: 11
 
-                            IconGlyph {
-                                name: modelData.icon
-                                size: 17
-                                color: isSelected ? itemAccent
-                                                  : (navMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                                Behavior on color { ColorAnimation { duration: 180 } }
-                            }
+                                Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                            Text {
-                                Layout.fillWidth: true
-                                text: modelData.label
-                                color: isSelected ? Theme.textPrimary
-                                                  : (navMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary)
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 13
-                                font.weight: isSelected ? Font.DemiBold : Font.Medium
-                                Behavior on color { ColorAnimation { duration: 180 } }
-                            }
+                                IconGlyph {
+                                    name: modelData.icon
+                                    size: 17
+                                    color: isSelected ? itemAccent
+                                                      : (isHovered ? Theme.textPrimary : Theme.textSecondary)
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
 
-                            // Live running status indicator dot
-                            Rectangle {
-                                visible: channelActive
-                                width: 8
-                                height: 8
-                                radius: 4
-                                color: index === 2 ? Theme.lockAccent : Theme.success
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.label
+                                    color: isSelected ? Theme.textPrimary
+                                                      : (isHovered ? Theme.textPrimary : Theme.textSecondary)
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 13
+                                    font.weight: isSelected ? Font.DemiBold : Font.Medium
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
 
-                                SequentialAnimation on opacity {
-                                    running: channelActive && root.visible && Window.window && Window.window.visible
-                                    loops: Animation.Infinite
-                                    NumberAnimation { from: 1.0; to: 0.35; duration: 950; easing.type: Easing.InOutSine }
-                                    NumberAnimation { from: 0.35; to: 1.0; duration: 950; easing.type: Easing.InOutSine }
+                                // Live running status indicator dot
+                                Rectangle {
+                                    visible: channelActive
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    color: index === 2 ? Theme.lockAccent : Theme.success
+
+                                    SequentialAnimation on opacity {
+                                        running: channelActive && root.visible && Window.window && Window.window.visible
+                                        loops: Animation.Infinite
+                                        NumberAnimation { from: 1.0; to: 0.35; duration: 950; easing.type: Easing.InOutSine }
+                                        NumberAnimation { from: 0.35; to: 1.0; duration: 950; easing.type: Easing.InOutSine }
+                                    }
                                 }
                             }
                         }
@@ -193,6 +217,15 @@ Rectangle {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            onEntered: {
+                                navContainer.lastHoveredIndex = index
+                                navContainer.hoveredIndex = index
+                            }
+                            onExited: {
+                                if (navContainer.hoveredIndex === index) {
+                                    navContainer.hoveredIndex = -1
+                                }
+                            }
                             onClicked: root.tabSelected(index)
                         }
                     }
@@ -201,84 +234,5 @@ Rectangle {
         }
 
         Item { Layout.fillHeight: true }
-
-        // Compact Low-Resource Status Card at bottom of sidebar
-        Rectangle {
-            Layout.fillWidth: true
-            height: 78
-            radius: Theme.radiusMd
-            color: Theme.surfaceElevated
-            border.width: 1
-            border.color: Theme.border
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    IconGlyph {
-                        name: "cpu"
-                        size: 13
-                        color: Theme.accent
-                    }
-
-                    Text {
-                        text: "内存占用"
-                        color: Theme.textSecondary
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: appController.memoryUsageMB.toFixed(1) + " MB"
-                        color: Theme.textPrimary
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.DemiBold
-                    }
-                }
-
-                // Quick Trim Memory clickable link
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 26
-                    radius: 7
-                    color: trimMouse.containsMouse ? Theme.cardHoverBg : Theme.cardBg
-                    border.width: 1
-                    border.color: Theme.border
-                    Behavior on color { ColorAnimation { duration: 140 } }
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
-                        IconGlyph {
-                            name: "sparkles"
-                            size: 12
-                            color: Theme.accent
-                        }
-                        Text {
-                            text: "释放内存缓存"
-                            color: Theme.textPrimary
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                        }
-                    }
-
-                    MouseArea {
-                        id: trimMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: appController.trimMemoryNow()
-                    }
-                }
-            }
-        }
     }
 }

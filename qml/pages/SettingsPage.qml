@@ -353,7 +353,7 @@ Flickable {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "缩略图采用硬件缩放按需异步解码，最小化至托盘后自动回收 GPU 场景纹理与工作集内存"
+                            text: "每次更换桌面或锁屏壁纸后将自动释放程序缓存；最小化至托盘后自动回收 GPU 场景纹理与工作集内存"
                             color: Theme.textSecondary
                             font.family: Theme.fontFamily
                             font.pixelSize: 11

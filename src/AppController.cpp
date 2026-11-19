@@ -1,12 +1,14 @@
 #include "AppController.h"
 #include "platform/WindowsUtils.h"
 
-#include <QApplication>
+#include <QCursor>
 #include <QDir>
-#include <QIcon>
+#include <QEvent>
+#include <QGuiApplication>
 #include <QPixmapCache>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QStandardPaths>
 
 namespace AuraPaper {
@@ -53,10 +55,17 @@ AppController::AppController(QObject *parent)
     m_trimDelayTimer.setInterval(800);
     connect(&m_trimDelayTimer, &QTimer::timeout, this, &AppController::releaseIdleResources);
 
+    // Automatic cache release after every wallpaper switch (desktop or lock screen)
+    m_autoCacheTimer.setSingleShot(true);
+    m_autoCacheTimer.setInterval(650);
+    connect(&m_autoCacheTimer, &QTimer::timeout, this, &AppController::performAutoCacheRelease);
+
     // Wire channel signals
     auto wireChannel = [this](WallpaperChannel *ch) {
         connect(ch, &WallpaperChannel::settingsDirty, this, &AppController::scheduleSaveSettings);
-        connect(ch, &WallpaperChannel::runningChanged, this, &AppController::updateTrayMenuLabels);
+        connect(ch, &WallpaperChannel::wallpaperSwitched, this, [this]() {
+            m_autoCacheTimer.start();
+        });
         connect(ch, &WallpaperChannel::notificationRequested, this, &AppController::toastMessage);
     };
     wireChannel(&m_desktopChannel);
@@ -71,14 +80,49 @@ AppController::~AppController() {
     if (m_trayIcon) {
         m_trayIcon->hide();
     }
-    delete m_trayMenu;
 }
 
 void AppController::attachWindow(QQuickWindow *window, QQmlEngine *engine) {
+    if (m_window) {
+        m_window->removeEventFilter(this);
+    }
     m_window = window;
     m_engine = engine;
     if (m_window) {
+        m_window->installEventFilter(this);
         WindowsUtils::applyWindowVisuals(m_window, m_darkTheme);
+    }
+}
+
+bool AppController::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == m_window && event->type() == QEvent::Close && !m_quitting) {
+        if (m_minimizeToTrayOnClose) {
+            event->ignore();
+            hideToTray(true);
+            return true;
+        }
+        event->ignore();
+        quitApplication();
+        return true;
+    }
+    return QObject::eventFilter(watched, event);
+}
+
+void AppController::registerTrayPopup(QQuickWindow *popup) {
+    m_trayPopup = popup;
+}
+
+void AppController::prepareTrayPopupWindow(QQuickWindow *popup) {
+    if (!popup) {
+        return;
+    }
+    WindowsUtils::applyWindowVisuals(popup, m_darkTheme);
+    WindowsUtils::activatePopupWindow(popup);
+}
+
+void AppController::onTrayPopupClosed() {
+    if (!m_window || !m_window->isVisible()) {
+        m_trimDelayTimer.start();
     }
 }
 
@@ -87,55 +131,42 @@ void AppController::setupSystemTray() {
         return;
     }
 
-    m_trayMenu = new QMenu();
-    m_trayMenu->setStyleSheet(QStringLiteral(
-        "QMenu { padding: 6px; }"
-        "QMenu::item { padding: 6px 24px 6px 14px; border-radius: 4px; }"
-    ));
-
-    QAction *actShow = m_trayMenu->addAction(QStringLiteral("显示主界面"));
-    QFont boldFont = actShow->font();
-    boldFont.setBold(true);
-    actShow->setFont(boldFont);
-    connect(actShow, &QAction::triggered, this, &AppController::showMainWindow);
-
-    m_trayMenu->addSeparator();
-
-    QAction *actNextDesk = m_trayMenu->addAction(QStringLiteral("立即切换桌面壁纸"));
-    connect(actNextDesk, &QAction::triggered, &m_desktopChannel, &WallpaperChannel::nextWallpaper);
-
-    m_actToggleDesktop = m_trayMenu->addAction(QStringLiteral("启动桌面自动更换"));
-    connect(m_actToggleDesktop, &QAction::triggered, &m_desktopChannel, &WallpaperChannel::toggleRunning);
-
-    m_trayMenu->addSeparator();
-
-    QAction *actNextLock = m_trayMenu->addAction(QStringLiteral("立即切换锁屏壁纸"));
-    connect(actNextLock, &QAction::triggered, &m_lockScreenChannel, &WallpaperChannel::nextWallpaper);
-
-    m_actToggleLock = m_trayMenu->addAction(QStringLiteral("启动锁屏自动更换"));
-    connect(m_actToggleLock, &QAction::triggered, &m_lockScreenChannel, &WallpaperChannel::toggleRunning);
-
-    m_trayMenu->addSeparator();
-
-    QAction *actQuit = m_trayMenu->addAction(QStringLiteral("退出 AuraPaper"));
-    connect(actQuit, &QAction::triggered, this, &AppController::quitApplication);
-
-    m_trayIcon = new QSystemTrayIcon(QIcon(QStringLiteral(":/AuraPaper/resources/icons/app_icon.png")), this);
+    m_trayIcon = new NativeSystemTray(this);
     m_trayIcon->setToolTip(QStringLiteral("AuraPaper 光影壁纸 - 桌面与锁屏智能壁纸引擎"));
-    m_trayIcon->setContextMenu(m_trayMenu);
 
-    connect(m_trayIcon, &QSystemTrayIcon::activated, this,
-            [this](QSystemTrayIcon::ActivationReason reason) {
-                if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
-                    if (m_window && m_window->isVisible() && m_window->visibility() != QWindow::Minimized) {
-                        hideToTray(false);
-                    } else {
-                        showMainWindow();
-                    }
-                }
-            });
+    connect(m_trayIcon, &NativeSystemTray::rightClicked, this, [this]() {
+        const QPoint cursorPos = QCursor::pos();
+        QScreen *screen = QGuiApplication::screenAt(cursorPos);
+        if (!screen) {
+            screen = QGuiApplication::primaryScreen();
+        }
+        const QRect avail = screen ? screen->availableGeometry() : QRect(0, 0, 1920, 1080);
+        const int menuW = m_trayPopup ? m_trayPopup->width() : 236;
+        const int menuH = m_trayPopup ? m_trayPopup->height() : 340;
 
-    updateTrayMenuLabels();
+        int px = cursorPos.x() - menuW / 2;
+        int py = cursorPos.y() - menuH - 10;
+        if (py < avail.top() + 8) {
+            py = cursorPos.y() + 10;
+        }
+        px = qBound(avail.left() + 8, px, avail.right() - menuW - 8);
+        py = qBound(avail.top() + 8, py, avail.bottom() - menuH - 8);
+
+        m_trimDelayTimer.stop();
+        emit requestTrayMenu(px, py);
+    });
+
+    connect(m_trayIcon, &NativeSystemTray::leftClicked, this, [this]() {
+        if (m_trayPopup && m_trayPopup->isVisible()) {
+            m_trayPopup->hide();
+        }
+        if (m_window && m_window->isVisible() && m_window->visibility() != QWindow::Minimized) {
+            hideToTray(false);
+        } else {
+            showMainWindow();
+        }
+    });
+
     m_trayIcon->show();
 }
 
@@ -215,6 +246,9 @@ void AppController::showMainWindow() {
 }
 
 void AppController::hideToTray(bool showBalloonIfFirst) {
+    if (m_trayIcon) {
+        m_trayIcon->ensureVisible();
+    }
     if (m_window) {
         m_window->hide();
     }
@@ -222,20 +256,37 @@ void AppController::hideToTray(bool showBalloonIfFirst) {
 
     if (showBalloonIfFirst && !m_trayHintShown && m_trayIcon && m_trayIcon->isVisible()) {
         m_trayHintShown = true;
-        m_trayIcon->showMessage(
+        m_trayIcon->showBalloon(
             QStringLiteral("AuraPaper 光影壁纸"),
-            QStringLiteral("程序已最小化到系统托盘并在后台低占用运行，点击托盘图标可随时恢复界面。"),
-            QSystemTrayIcon::Information,
-            2600);
+            QStringLiteral("程序已最小化到系统托盘并在后台低占用运行，点击托盘图标可随时恢复界面。"));
+    }
+}
+
+void AppController::handleCloseRequest() {
+    if (m_minimizeToTrayOnClose) {
+        hideToTray(true);
+    } else {
+        quitApplication();
     }
 }
 
 void AppController::quitApplication() {
+    m_quitting = true;
+    m_uiTickTimer.stop();
+    m_trimDelayTimer.stop();
+    m_autoCacheTimer.stop();
+    m_saveDebounceTimer.stop();
     saveAllSettings();
     if (m_trayIcon) {
         m_trayIcon->hide();
     }
-    QApplication::quit();
+    if (m_trayPopup) {
+        m_trayPopup->hide();
+    }
+    if (m_window) {
+        m_window->hide();
+    }
+    QCoreApplication::exit(0);
 }
 
 void AppController::trimMemoryNow() {
@@ -314,19 +365,6 @@ void AppController::saveAllSettings() {
     m_settings.sync();
 }
 
-void AppController::updateTrayMenuLabels() {
-    if (m_actToggleDesktop) {
-        m_actToggleDesktop->setText(m_desktopChannel.running()
-                                        ? QStringLiteral("停止桌面自动更换")
-                                        : QStringLiteral("启动桌面自动更换"));
-    }
-    if (m_actToggleLock) {
-        m_actToggleLock->setText(m_lockScreenChannel.running()
-                                     ? QStringLiteral("停止锁屏自动更换")
-                                     : QStringLiteral("启动锁屏自动更换"));
-    }
-}
-
 void AppController::updateMemoryUsage() {
     const double mb = WindowsUtils::getProcessWorkingSetMB();
     if (qAbs(mb - m_memoryUsageMB) >= 0.1) {
@@ -340,11 +378,28 @@ void AppController::releaseIdleResources() {
     if (m_window && !m_window->isVisible()) {
         m_window->releaseResources();
     }
+    if (m_trayPopup && !m_trayPopup->isVisible()) {
+        m_trayPopup->releaseResources();
+    }
     QPixmapCache::clear();
     if (m_engine) {
         m_engine->collectGarbage();
     }
     WindowsUtils::trimProcessMemory();
+}
+
+void AppController::performAutoCacheRelease() {
+    QPixmapCache::clear();
+    if (m_engine) {
+        m_engine->collectGarbage();
+    }
+    if (m_window && !m_window->isVisible()) {
+        m_window->releaseResources();
+    }
+    WindowsUtils::trimProcessMemory();
+    if (m_window && m_window->isVisible()) {
+        updateMemoryUsage();
+    }
 }
 
 } // namespace AuraPaper

@@ -1,8 +1,8 @@
 #include "AppController.h"
 #include "ThumbnailImageProvider.h"
 
-#include <QApplication>
 #include <QFont>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QLocalServer>
 #include <QLocalSocket>
@@ -16,12 +16,12 @@
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName(QStringLiteral("AuraPaper"));
     QCoreApplication::setApplicationName(QStringLiteral("AuraPaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.0"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.1"));
 
     // Keep Qt Quick texture/pixmap memory footprint tightly bounded
     QPixmapCache::setCacheLimit(16384); // 16 MB
 
-    QApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
     app.setQuitOnLastWindowClosed(false);
     app.setWindowIcon(QIcon(QStringLiteral(":/AuraPaper/resources/icons/app_icon.png")));
 
@@ -69,14 +69,21 @@ int main(int argc, char *argv[]) {
         Qt::QueuedConnection);
 
     engine.loadFromModule(QStringLiteral("AuraPaper"), QStringLiteral("Main"));
+    engine.loadFromModule(QStringLiteral("AuraPaper"), QStringLiteral("TrayMenuPopup"));
 
-    if (!engine.rootObjects().isEmpty()) {
-        if (auto *win = qobject_cast<QQuickWindow *>(engine.rootObjects().first())) {
+    const auto roots = engine.rootObjects();
+    if (!roots.isEmpty()) {
+        if (auto *win = qobject_cast<QQuickWindow *>(roots.at(0))) {
             controller.attachWindow(win, &engine);
             if (startMinimizedFlag) {
                 controller.hideToTray(false);
             } else {
                 controller.onWindowVisibilityChanged(true);
+            }
+        }
+        if (roots.size() > 1) {
+            if (auto *trayWin = qobject_cast<QQuickWindow *>(roots.at(1))) {
+                controller.registerTrayPopup(trayWin);
             }
         }
     }

@@ -9,7 +9,7 @@ Rectangle {
     property string pageTitle: "总览"
     property string pageSubtitle: ""
 
-    height: 54
+    height: 68
     color: "transparent"
 
     // Drag & double-click maximize area
@@ -33,16 +33,19 @@ Rectangle {
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 24
-        anchors.rightMargin: 12
+        anchors.rightMargin: 14
+        anchors.topMargin: 12
+        anchors.bottomMargin: 4
         spacing: 10
 
         ColumnLayout {
-            spacing: 1
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 3
             Text {
                 text: root.pageTitle
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
-                font.pixelSize: 16
+                font.pixelSize: 17
                 font.weight: Font.Bold
             }
             Text {
@@ -108,30 +111,6 @@ Rectangle {
             }
         }
 
-        // Minimize to Tray Quick Button
-        Rectangle {
-            width: 34
-            height: 32
-            radius: 8
-            color: trayMouse.containsMouse ? Theme.surfaceElevated : "transparent"
-            Behavior on color { ColorAnimation { duration: 140 } }
-
-            IconGlyph {
-                anchors.centerIn: parent
-                name: "tray"
-                size: 15
-                color: trayMouse.containsMouse ? Theme.accent : Theme.textSecondary
-            }
-
-            MouseArea {
-                id: trayMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: appController.hideToTray(true)
-            }
-        }
-
         // Divider
         Rectangle {
             width: 1
@@ -140,12 +119,19 @@ Rectangle {
         }
 
         // Minimize Window
-        Rectangle {
-            width: 34
-            height: 32
-            radius: 8
-            color: minMouse.containsMouse ? Theme.surfaceElevated : "transparent"
-            Behavior on color { ColorAnimation { duration: 140 } }
+        Item {
+            implicitWidth: 34
+            implicitHeight: 32
+            Layout.preferredWidth: 34
+            Layout.preferredHeight: 32
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 8
+                color: Theme.surfaceElevated
+                opacity: minMouse.containsMouse ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 130 } }
+            }
 
             IconGlyph {
                 anchors.centerIn: parent
@@ -164,12 +150,19 @@ Rectangle {
         }
 
         // Maximize / Restore Window
-        Rectangle {
-            width: 34
-            height: 32
-            radius: 8
-            color: maxMouse.containsMouse ? Theme.surfaceElevated : "transparent"
-            Behavior on color { ColorAnimation { duration: 140 } }
+        Item {
+            implicitWidth: 34
+            implicitHeight: 32
+            Layout.preferredWidth: 34
+            Layout.preferredHeight: 32
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 8
+                color: Theme.surfaceElevated
+                opacity: maxMouse.containsMouse ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 130 } }
+            }
 
             IconGlyph {
                 anchors.centerIn: parent
@@ -195,12 +188,19 @@ Rectangle {
         }
 
         // Close Button (minimizes to tray if enabled)
-        Rectangle {
-            width: 34
-            height: 32
-            radius: 8
-            color: closeMouse.containsMouse ? Theme.danger : "transparent"
-            Behavior on color { ColorAnimation { duration: 140 } }
+        Item {
+            implicitWidth: 34
+            implicitHeight: 32
+            Layout.preferredWidth: 34
+            Layout.preferredHeight: 32
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 8
+                color: Theme.danger
+                opacity: closeMouse.containsMouse ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 130 } }
+            }
 
             IconGlyph {
                 anchors.centerIn: parent
@@ -214,13 +214,7 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (appController.minimizeToTrayOnClose) {
-                        appController.hideToTray(true)
-                    } else {
-                        appController.quitApplication()
-                    }
-                }
+                onClicked: appController.handleCloseRequest()
             }
         }
     }

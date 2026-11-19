@@ -32,15 +32,6 @@ ApplicationWindow {
         }
     }
 
-    onClosing: function(close) {
-        if (appController.minimizeToTrayOnClose) {
-            close.accepted = false
-            appController.hideToTray(true)
-        } else {
-            appController.quitApplication()
-        }
-    }
-
     Connections {
         target: appController
         function onToastMessage(msg, isError) {

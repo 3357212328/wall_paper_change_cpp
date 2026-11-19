@@ -121,6 +121,7 @@ signals:
     void lastErrorChanged();
     void searchTextChanged();
     void settingsDirty();
+    void wallpaperSwitched();
     void notificationRequested(const QString &message, bool isError);
 
 private:
