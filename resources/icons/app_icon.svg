@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="48%" stop-color="#3730A3"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <radialGradient id="auroraGlow" cx="80%" cy="20%" r="62%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.65"/>
+      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#1E1B4B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="55%" stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="55%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#FB923C"/>
+    </radialGradient>
+    <radialGradient id="sunHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE047" stop-opacity="0.58"/>
+      <stop offset="100%" stop-color="#FDE047" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mountainBack" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+    <linearGradient id="mountainFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="55%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <linearGradient id="cardFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="backCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#C7D2FE" stop-opacity="0.14"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main Squircle Base -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgGrad)"/>
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#auroraGlow)"/>
+  <rect x="28" y="28" width="456" height="456" rx="108" fill="none" stroke="url(#cardFrame)" stroke-width="5"/>
+
+  <!-- Back Layer Card (Lock Screen Motif) -->
+  <g transform="translate(20, -10) rotate(6 290 210)">
+    <rect x="136" y="100" width="292" height="224" rx="34" fill="url(#backCard)" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="4.5"/>
+    <!-- Minimal Lock Glyph on Top-Right of Back Card -->
+    <g transform="translate(362, 128)">
+      <path d="M12 16 V10 A10 10 0 0 1 32 10 V16" fill="none" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="4.5" stroke-linecap="round"/>
+      <rect x="6" y="16" width="32" height="24" rx="7" fill="#FFFFFF" fill-opacity="0.95"/>
+      <circle cx="22" cy="28" r="3.5" fill="#3730A3"/>
+    </g>
+  </g>
+
+  <!-- Front Layer Card (Desktop Wallpaper Motif) -->
+  <g>
+    <!-- Soft drop shadow -->
+    <rect x="80" y="162" width="318" height="248" rx="36" fill="#0F172A" fill-opacity="0.42"/>
+    <!-- Rounded Sky Base -->
+    <rect x="76" y="148" width="318" height="248" rx="36" fill="url(#skyGrad)"/>
+    <!-- Sun Halo & Sun -->
+    <circle cx="164" cy="222" r="62" fill="url(#sunHalo)"/>
+    <circle cx="164" cy="222" r="27" fill="url(#sunGlow)"/>
+    <!-- Back Mountain (strictly inside rounded rect: bottom y=396, left x=76+36=112, right x=394-36=358) -->
+    <path d="M76 360 L184 242 Q200 225 216 242 L316 396 L112 396 A36 36 0 0 1 76 360 Z" fill="url(#mountainBack)"/>
+    <!-- Front Mountain Peak (follows bottom-right rounded corner cleanly) -->
+    <path d="M158 396 L278 232 Q294 211 310 232 L394 348 L394 360 A36 36 0 0 1 358 396 Z" fill="url(#mountainFront)"/>
+    <!-- Foreground Ridge (follows bottom-left rounded corner cleanly) -->
+    <path d="M76 360 L76 350 L138 294 Q152 281 166 294 L256 396 L112 396 A36 36 0 0 1 76 360 Z" fill="#0F172A" fill-opacity="0.52"/>
+    <!-- Gloss Border on Front Card -->
+    <rect x="76" y="148" width="318" height="248" rx="36" fill="none" stroke="url(#cardFrame)" stroke-width="5.5"/>
+  </g>
+
+  <!-- Subtle Sparkle Accent -->
+  <path d="M114 94 L120 110 L136 116 L120 122 L114 138 L108 122 L92 116 L108 110 Z" fill="#FFFFFF" fill-opacity="0.92"/>
+</svg>

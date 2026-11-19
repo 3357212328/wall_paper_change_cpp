@@ -1,0 +1,20 @@
+# Build & distribution outputs
+build/
+dist/
+out/
+cmake-build-*/
+
+# Visual Studio & IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+CMakeUserPresets.json
+
+# OS & temporary files
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
