@@ -129,6 +129,17 @@ void WallpaperChannel::loadSettings(QSettings &settings) {
     }
 
     m_autoResumePending = settings.value(QStringLiteral("running"), false).toBool();
+    const qint64 totalMs = static_cast<qint64>(m_intervalSeconds) * 1000;
+    const qint64 loadedRemainMs = settings.value(QStringLiteral("remainingMs"), -1).toLongLong();
+    if (m_autoResumePending && loadedRemainMs > 0) {
+        m_savedRemainingMs = qBound<qint64>(1000, loadedRemainMs, totalMs);
+        m_remainingSeconds = static_cast<int>((m_savedRemainingMs + 999) / 1000);
+        m_progress = totalMs > 0
+                         ? qBound(0.0, static_cast<double>(totalMs - m_savedRemainingMs) / static_cast<double>(totalMs), 1.0)
+                         : 0.0;
+    } else {
+        m_savedRemainingMs = -1;
+    }
     settings.endGroup();
 
     emit folderPathChanged();
@@ -137,12 +148,14 @@ void WallpaperChannel::loadSettings(QSettings &settings) {
     emit switchOrderChanged();
     emit fitModeChanged();
     emit currentImageChanged();
+    emit countdownChanged();
 
     if (!m_folderPath.isEmpty() && QDir(m_folderPath).exists()) {
         updateFileWatcher();
         scheduleFolderScan();
     } else {
         m_autoResumePending = false;
+        m_savedRemainingMs = -1;
     }
 }
 
@@ -150,6 +163,11 @@ void WallpaperChannel::saveSettings(QSettings &settings) const {
     const QString group = (m_kind == ChannelKind::Desktop)
                               ? QStringLiteral("Desktop")
                               : QStringLiteral("LockScreen");
+    const bool effectiveRunning = m_running || m_autoResumePending;
+    const qint64 remainMs = m_running
+                                ? currentRemainingMs()
+                                : (m_autoResumePending ? m_savedRemainingMs : -1);
+
     settings.beginGroup(group);
     settings.setValue(QStringLiteral("folderPath"), m_folderPath);
     settings.setValue(QStringLiteral("includeSubfolders"), m_includeSubfolders);
@@ -157,7 +175,8 @@ void WallpaperChannel::saveSettings(QSettings &settings) const {
     settings.setValue(QStringLiteral("switchOrder"), static_cast<int>(m_switchOrder));
     settings.setValue(QStringLiteral("fitMode"), static_cast<int>(m_fitMode));
     settings.setValue(QStringLiteral("currentImagePath"), m_currentImagePath);
-    settings.setValue(QStringLiteral("running"), m_running);
+    settings.setValue(QStringLiteral("running"), effectiveRunning);
+    settings.setValue(QStringLiteral("remainingMs"), remainMs);
     settings.endGroup();
 }
 
@@ -301,6 +320,7 @@ void WallpaperChannel::start() {
 
 void WallpaperChannel::stop() {
     m_autoResumePending = false;
+    m_savedRemainingMs = -1;
     if (!m_running) {
         return;
     }
@@ -567,7 +587,20 @@ void WallpaperChannel::handleScanFinished(quint64 generation, QVector<WallpaperE
         if (m_listModel.count() > 0 && !m_running) {
             m_running = true;
             emit runningChanged();
-            restartSwitchTimer();
+
+            const qint64 totalMs = static_cast<qint64>(m_intervalSeconds) * 1000;
+            const auto &entries = m_listModel.entries();
+            const bool currentInFolder = std::any_of(entries.begin(), entries.end(),
+                [this](const WallpaperEntry &e) {
+                    return e.filePath.compare(m_currentImagePath, Qt::CaseInsensitive) == 0;
+                });
+
+            if (currentInFolder && m_savedRemainingMs > 0 && m_savedRemainingMs <= totalMs) {
+                resumeSwitchTimer(m_savedRemainingMs);
+            } else {
+                restartSwitchTimer();
+            }
+            m_savedRemainingMs = -1;
         }
     }
 }
@@ -744,9 +777,28 @@ void WallpaperChannel::onSwitchTimerTimeout() {
 }
 
 void WallpaperChannel::restartSwitchTimer() {
+    m_savedRemainingMs = -1;
     m_cycleStartMs = m_clock.elapsed();
     m_switchTimer.start(m_intervalSeconds * 1000);
     refreshCountdownDisplay();
+}
+
+void WallpaperChannel::resumeSwitchTimer(qint64 remainingMs) {
+    const qint64 totalMs = static_cast<qint64>(m_intervalSeconds) * 1000;
+    const qint64 clampedRemain = qBound<qint64>(1000, remainingMs, totalMs);
+    const qint64 elapsedMs = totalMs - clampedRemain;
+    m_cycleStartMs = m_clock.elapsed() - elapsedMs;
+    m_switchTimer.start(static_cast<int>(clampedRemain));
+    refreshCountdownDisplay();
+}
+
+qint64 WallpaperChannel::currentRemainingMs() const {
+    if (!m_running) {
+        return -1;
+    }
+    const qint64 totalMs = static_cast<qint64>(m_intervalSeconds) * 1000;
+    const qint64 elapsedMs = m_clock.elapsed() - m_cycleStartMs;
+    return qBound<qint64>(0, totalMs - elapsedMs, totalMs);
 }
 
 void WallpaperChannel::setLastError(const QString &err) {

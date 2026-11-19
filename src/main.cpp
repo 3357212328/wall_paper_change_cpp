@@ -16,7 +16,7 @@
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName(QStringLiteral("AuraPaper"));
     QCoreApplication::setApplicationName(QStringLiteral("AuraPaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.1"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.2"));
 
     // Keep Qt Quick texture/pixmap memory footprint tightly bounded
     QPixmapCache::setCacheLimit(16384); // 16 MB

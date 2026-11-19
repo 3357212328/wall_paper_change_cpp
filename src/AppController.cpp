@@ -60,6 +60,15 @@ AppController::AppController(QObject *parent)
     m_autoCacheTimer.setInterval(650);
     connect(&m_autoCacheTimer, &QTimer::timeout, this, &AppController::performAutoCacheRelease);
 
+    // Periodic remaining-time checkpoint (only writes when a channel is running)
+    m_checkpointTimer.setInterval(30000);
+    connect(&m_checkpointTimer, &QTimer::timeout, this, [this]() {
+        if (m_desktopChannel.running() || m_lockScreenChannel.running()) {
+            saveAllSettings();
+        }
+    });
+    m_checkpointTimer.start();
+
     // Wire channel signals
     auto wireChannel = [this](WallpaperChannel *ch) {
         connect(ch, &WallpaperChannel::settingsDirty, this, &AppController::scheduleSaveSettings);
@@ -121,6 +130,9 @@ void AppController::prepareTrayPopupWindow(QQuickWindow *popup) {
 }
 
 void AppController::onTrayPopupClosed() {
+    if (m_quitting) {
+        return;
+    }
     if (!m_window || !m_window->isVisible()) {
         m_trimDelayTimer.start();
     }
@@ -253,6 +265,7 @@ void AppController::hideToTray(bool showBalloonIfFirst) {
         m_window->hide();
     }
     onWindowVisibilityChanged(false);
+    saveAllSettings();
 
     if (showBalloonIfFirst && !m_trayHintShown && m_trayIcon && m_trayIcon->isVisible()) {
         m_trayHintShown = true;
@@ -276,6 +289,7 @@ void AppController::quitApplication() {
     m_trimDelayTimer.stop();
     m_autoCacheTimer.stop();
     m_saveDebounceTimer.stop();
+    m_checkpointTimer.stop();
     saveAllSettings();
     if (m_trayIcon) {
         m_trayIcon->hide();
@@ -286,7 +300,9 @@ void AppController::quitApplication() {
     if (m_window) {
         m_window->hide();
     }
-    QCoreApplication::exit(0);
+    QMetaObject::invokeMethod(QCoreApplication::instance(), []() {
+        QCoreApplication::exit(0);
+    }, Qt::QueuedConnection);
 }
 
 void AppController::trimMemoryNow() {
@@ -301,6 +317,9 @@ void AppController::trimMemoryNow() {
 }
 
 void AppController::onWindowVisibilityChanged(bool visible) {
+    if (m_quitting) {
+        return;
+    }
     if (visible) {
         m_trimDelayTimer.stop();
         m_desktopChannel.refreshCountdownDisplay();

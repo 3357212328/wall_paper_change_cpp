@@ -53,7 +53,7 @@ public:
     void setPauseOnFullscreen(bool pause);
 
     double memoryUsageMB() const { return m_memoryUsageMB; }
-    QString appVersion() const { return QStringLiteral("1.0.1"); }
+    QString appVersion() const { return QStringLiteral("1.0.2"); }
 
     Q_INVOKABLE void showMainWindow();
     Q_INVOKABLE void hideToTray(bool showBalloonIfFirst = true);
@@ -111,6 +111,7 @@ private:
     QTimer m_saveDebounceTimer;
     QTimer m_trimDelayTimer;
     QTimer m_autoCacheTimer;
+    QTimer m_checkpointTimer;
 
     NativeSystemTray *m_trayIcon = nullptr;
 };

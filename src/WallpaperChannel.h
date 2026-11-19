@@ -133,6 +133,8 @@ private:
     void applyImageInternal(const QString &filePath, bool recordHistory, bool resetTimer, bool silentToast);
     void onSwitchTimerTimeout();
     void restartSwitchTimer();
+    void resumeSwitchTimer(qint64 remainingMs);
+    qint64 currentRemainingMs() const;
     void setLastError(const QString &err);
 
     ChannelKind m_kind;
@@ -155,6 +157,7 @@ private:
     int m_remainingSeconds = 0;
     double m_progress = 0.0;
     qint64 m_cycleStartMs = 0;
+    qint64 m_savedRemainingMs = -1;
     QElapsedTimer m_clock;
 
     WallpaperListModel m_listModel;
