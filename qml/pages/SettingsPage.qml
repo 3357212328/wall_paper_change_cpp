@@ -215,7 +215,7 @@ Flickable {
                     Item { Layout.fillWidth: true }
                     AnimatedToggle {
                         checked: appController.autoStart
-                        activeColor: Theme.success
+                        activeColor: Theme.accent
                         onToggled: function(v) { appController.autoStart = v }
                     }
                 }
