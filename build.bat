@@ -23,7 +23,7 @@ mkdir "%DIST_DIR%"
 copy /y "%~dp0build\AuraPaper.exe" "%DIST_DIR%\AuraPaper.exe" >nul
 copy /y "%~dp0README.md" "%DIST_DIR%\README.md" >nul
 
-"%QT_DIR%\bin\windeployqt.exe" --release --qmldir "%~dp0qml" --no-translations --no-opengl-sw --no-compiler-runtime "%DIST_DIR%\AuraPaper.exe"
+"%QT_DIR%\bin\windeployqt.exe" --release --qmldir "%~dp0qml" --no-translations --no-opengl-sw --no-compiler-runtime --no-system-dxc-compiler --no-system-d3d-compiler "%DIST_DIR%\AuraPaper.exe"
 if errorlevel 1 exit /b 1
 
 rem Prune unused QtQuick Controls styles (app explicitly uses Basic style) & non-runtime plugins
