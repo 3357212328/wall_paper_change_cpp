@@ -53,7 +53,7 @@ public:
     void setPauseOnFullscreen(bool pause);
 
     double memoryUsageMB() const { return m_memoryUsageMB; }
-    QString appVersion() const { return QStringLiteral("1.0.2"); }
+    QString appVersion() const { return QStringLiteral("1.0.3"); }
 
     Q_INVOKABLE void showMainWindow();
     Q_INVOKABLE void hideToTray(bool showBalloonIfFirst = true);
@@ -63,6 +63,7 @@ public:
     Q_INVOKABLE void onWindowVisibilityChanged(bool visible);
     Q_INVOKABLE QString formatDuration(int totalSeconds) const;
     Q_INVOKABLE void registerTrayPopup(QQuickWindow *popup);
+    Q_INVOKABLE void registerTrayBalloon(QQuickWindow *balloon);
     Q_INVOKABLE void prepareTrayPopupWindow(QQuickWindow *popup);
     Q_INVOKABLE void onTrayPopupClosed();
 
@@ -79,6 +80,7 @@ signals:
     void toastMessage(const QString &message, bool isError);
     void requestWindowReveal();
     void requestTrayMenu(int x, int y);
+    void requestTrayBalloon(int x, int y, const QString &title, const QString &message);
 
 private:
     void loadAllSettings();
@@ -105,6 +107,7 @@ private:
 
     QPointer<QQuickWindow> m_window;
     QPointer<QQuickWindow> m_trayPopup;
+    QPointer<QQuickWindow> m_trayBalloon;
     QPointer<QQmlEngine> m_engine;
 
     QTimer m_uiTickTimer;

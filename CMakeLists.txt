@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(AuraPaper VERSION 1.0.2 LANGUAGES CXX)
+project(AuraPaper VERSION 1.0.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -85,6 +85,7 @@ qt_add_qml_module(AuraPaper
         qml/components/CustomTitleBar.qml
         qml/components/SidebarNav.qml
         qml/components/ToastOverlay.qml
+        qml/components/TrayBalloonPopup.qml
         qml/components/TrayMenuPopup.qml
         qml/pages/OverviewPage.qml
         qml/pages/ChannelSettingsPage.qml

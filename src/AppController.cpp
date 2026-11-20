@@ -121,6 +121,10 @@ void AppController::registerTrayPopup(QQuickWindow *popup) {
     m_trayPopup = popup;
 }
 
+void AppController::registerTrayBalloon(QQuickWindow *balloon) {
+    m_trayBalloon = balloon;
+}
+
 void AppController::prepareTrayPopupWindow(QQuickWindow *popup) {
     if (!popup) {
         return;
@@ -177,6 +181,17 @@ void AppController::setupSystemTray() {
         } else {
             showMainWindow();
         }
+    });
+
+    connect(m_trayIcon, &NativeSystemTray::systemSuspending, this, [this]() {
+        m_desktopChannel.pauseForSleep();
+        m_lockScreenChannel.pauseForSleep();
+        saveAllSettings();
+    });
+
+    connect(m_trayIcon, &NativeSystemTray::systemResumed, this, [this]() {
+        m_desktopChannel.resumeFromSleep();
+        m_lockScreenChannel.resumeFromSleep();
     });
 
     m_trayIcon->show();
@@ -269,7 +284,19 @@ void AppController::hideToTray(bool showBalloonIfFirst) {
 
     if (showBalloonIfFirst && !m_trayHintShown && m_trayIcon && m_trayIcon->isVisible()) {
         m_trayHintShown = true;
-        m_trayIcon->showBalloon(
+        QScreen *screen = QGuiApplication::primaryScreen();
+        const QRect avail = screen ? screen->availableGeometry() : QRect(0, 0, 1920, 1080);
+        const int bw = m_trayBalloon ? m_trayBalloon->width() : 332;
+        const int bh = m_trayBalloon ? m_trayBalloon->height() : 86;
+        const int bx = avail.right() - bw - 14;
+        const int by = avail.bottom() - bh - 14;
+        if (m_trayBalloon) {
+            m_trayBalloon->setPosition(bx, by);
+            m_trayBalloon->show();
+            m_trayBalloon->raise();
+        }
+        emit requestTrayBalloon(
+            bx, by,
             QStringLiteral("AuraPaper 光影壁纸"),
             QStringLiteral("程序已最小化到系统托盘并在后台低占用运行，点击托盘图标可随时恢复界面。"));
     }

@@ -164,9 +164,11 @@ void WallpaperChannel::saveSettings(QSettings &settings) const {
                               ? QStringLiteral("Desktop")
                               : QStringLiteral("LockScreen");
     const bool effectiveRunning = m_running || m_autoResumePending;
-    const qint64 remainMs = m_running
-                                ? currentRemainingMs()
-                                : (m_autoResumePending ? m_savedRemainingMs : -1);
+    const qint64 remainMs = m_pausedForSleep
+                                ? m_sleepRemainingMs
+                                : (m_running
+                                       ? currentRemainingMs()
+                                       : (m_autoResumePending ? m_savedRemainingMs : -1));
 
     settings.beginGroup(group);
     settings.setValue(QStringLiteral("folderPath"), m_folderPath);
@@ -321,6 +323,8 @@ void WallpaperChannel::start() {
 void WallpaperChannel::stop() {
     m_autoResumePending = false;
     m_savedRemainingMs = -1;
+    m_pausedForSleep = false;
+    m_sleepRemainingMs = -1;
     if (!m_running) {
         return;
     }
@@ -465,6 +469,9 @@ void WallpaperChannel::refreshCountdownDisplay() {
             m_progress = 0.0;
             emit countdownChanged();
         }
+        return;
+    }
+    if (m_pausedForSleep) {
         return;
     }
 
@@ -758,8 +765,35 @@ void WallpaperChannel::applyImageInternal(const QString &filePath, bool recordHi
     });
 }
 
-void WallpaperChannel::onSwitchTimerTimeout() {
+void WallpaperChannel::pauseForSleep() {
+    if (!m_running || m_pausedForSleep) {
+        return;
+    }
+    m_sleepRemainingMs = currentRemainingMs();
+    m_pausedForSleep = true;
+    m_switchTimer.stop();
+}
+
+void WallpaperChannel::resumeFromSleep() {
+    if (!m_pausedForSleep) {
+        return;
+    }
+    m_pausedForSleep = false;
+    const qint64 remain = m_sleepRemainingMs;
+    m_sleepRemainingMs = -1;
+
     if (!m_running) {
+        return;
+    }
+    if (remain > 0) {
+        resumeSwitchTimer(remain);
+    } else {
+        restartSwitchTimer();
+    }
+}
+
+void WallpaperChannel::onSwitchTimerTimeout() {
+    if (!m_running || m_pausedForSleep) {
         return;
     }
     if (m_fullscreenCheck && m_fullscreenCheck()) {

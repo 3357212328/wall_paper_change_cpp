@@ -82,7 +82,12 @@ ApplicationWindow {
             height: 460
             opacity: Theme.dark ? 0.20 : 0.11
 
-            property color glowColor: mainWindow.currentTab === 2 ? Theme.lockAccent : Theme.accent
+            property color glowColor: {
+                if (mainWindow.currentTab === 0) return Theme.overviewAccent
+                if (mainWindow.currentTab === 2) return Theme.lockAccent
+                if (mainWindow.currentTab === 3) return Theme.settingsAccent
+                return Theme.accent
+            }
             Behavior on glowColor { ColorAnimation { duration: 420; easing.type: Easing.InOutCubic } }
             Behavior on opacity { NumberAnimation { duration: 300 } }
 

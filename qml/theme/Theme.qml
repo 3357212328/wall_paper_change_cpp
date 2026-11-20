@@ -33,6 +33,12 @@ QtObject {
     property color lockAccentHover: dark ? "#22D3EE" : "#0E7490"
     property color lockAccentSoft:  dark ? "#2906B6D4" : "#1A0891B2"
 
+    property color overviewAccent:     dark ? "#F43F5E" : "#E11D48"
+    property color overviewAccentSoft: dark ? "#29F43F5E" : "#1AE11D48"
+
+    property color settingsAccent:     dark ? "#F59E0B" : "#D97706"
+    property color settingsAccentSoft: dark ? "#29F59E0B" : "#1AD97706"
+
     property color success:         dark ? "#10B981" : "#059669"
     property color successSoft:     dark ? "#2610B981" : "#1A059669"
     property color warning:         dark ? "#F59E0B" : "#D97706"

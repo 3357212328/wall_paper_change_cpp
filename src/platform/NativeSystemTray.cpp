@@ -173,6 +173,15 @@ long long __stdcall NativeSystemTray::wndProc(void *hwndPtr, unsigned int msg,
                 QMetaObject::invokeMethod(self, &NativeSystemTray::rightClicked, Qt::QueuedConnection);
                 return 0;
             }
+        } else if (msg == WM_POWERBROADCAST) {
+            if (wParam == PBT_APMSUSPEND) {
+                QMetaObject::invokeMethod(self, &NativeSystemTray::systemSuspending, Qt::DirectConnection);
+                return TRUE;
+            }
+            if (wParam == PBT_APMRESUMEAUTOMATIC || wParam == PBT_APMRESUMESUSPEND) {
+                QMetaObject::invokeMethod(self, &NativeSystemTray::systemResumed, Qt::QueuedConnection);
+                return TRUE;
+            }
         } else if (self->m_taskbarCreatedMsg != 0 && msg == self->m_taskbarCreatedMsg) {
             if (self->m_visible) {
                 self->m_visible = false;

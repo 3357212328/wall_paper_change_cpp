@@ -132,6 +132,48 @@ CardContainer {
                     Behavior on scale   { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
                 }
 
+                // Loading indicator while decoding large 200MB+ wallpapers
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    visible: (imgA.status === Image.Loading || imgB.status === Image.Loading)
+                             && imgA.opacity < 0.05 && imgB.opacity < 0.05
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        width: 28
+                        height: 28
+                        radius: 14
+                        color: "transparent"
+                        border.width: 2.5
+                        border.color: root.accentColor
+
+                        Rectangle {
+                            width: 10
+                            height: 10
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            color: Theme.dark ? "#172036" : "#D6DEE9"
+                        }
+
+                        RotationAnimator on rotation {
+                            from: 0
+                            to: 360
+                            duration: 850
+                            loops: Animation.Infinite
+                            running: parent.visible && Window.window && Window.window.visible
+                        }
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "正在解码高清壁纸..."
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.textSecondary
+                    }
+                }
+
                 // Empty state placeholder
                 ColumnLayout {
                     anchors.centerIn: parent

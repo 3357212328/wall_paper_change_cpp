@@ -1,14 +1,41 @@
 #include "ThumbnailImageProvider.h"
 
+#include <QCryptographicHash>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QImage>
 #include <QImageReader>
 #include <QRunnable>
+#include <QStandardPaths>
 #include <QUrl>
 #include <atomic>
 
 namespace AuraPaper {
 
 namespace {
+
+QString thumbCacheDir() {
+    static const QString dir = []() {
+        QString p = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
+                    + QStringLiteral("/thumb_cache");
+        QDir().mkpath(p);
+        return p;
+    }();
+    return dir;
+}
+
+QString cacheFilePathFor(const QString &filePath, const QSize &target, qint64 mtimeMs, qint64 fileSize) {
+    const QByteArray key = QStringLiteral("%1|%2x%3|%4|%5")
+                               .arg(filePath)
+                               .arg(target.width())
+                               .arg(target.height())
+                               .arg(mtimeMs)
+                               .arg(fileSize)
+                               .toUtf8();
+    const QByteArray hash = QCryptographicHash::hash(key, QCryptographicHash::Sha1).toHex();
+    return thumbCacheDir() + QLatin1Char('/') + QString::fromLatin1(hash) + QStringLiteral(".jpg");
+}
 
 class ThumbnailResponse : public QQuickImageResponse {
 public:
@@ -45,9 +72,6 @@ private:
                 return;
             }
 
-            QImageReader reader(m_response->m_filePath);
-            reader.setAutoTransform(true);
-
             QSize target = m_response->m_requestedSize;
             if (!target.isValid() || target.width() <= 0 || target.height() <= 0) {
                 target = QSize(360, 210);
@@ -55,6 +79,27 @@ private:
             // Clamp upper bound to prevent accidental multi-megabyte decode in thumbnails
             target.setWidth(qMin(target.width(), 1280));
             target.setHeight(qMin(target.height(), 720));
+
+            const QFileInfo fi(m_response->m_filePath);
+            const qint64 fileSize = fi.size();
+            const qint64 mtimeMs = fi.lastModified().toMSecsSinceEpoch();
+            const bool useDiskCache = fileSize > (2 * 1024 * 1024); // Cache thumbnails for >2MB files
+            QString cachedPath;
+
+            if (useDiskCache) {
+                cachedPath = cacheFilePathFor(m_response->m_filePath, target, mtimeMs, fileSize);
+                if (QFileInfo::exists(cachedPath)) {
+                    QImage cached(cachedPath);
+                    if (!cached.isNull()) {
+                        m_response->m_image = std::move(cached);
+                        QMetaObject::invokeMethod(m_response, &QQuickImageResponse::finished, Qt::QueuedConnection);
+                        return;
+                    }
+                }
+            }
+
+            QImageReader reader(m_response->m_filePath);
+            reader.setAutoTransform(true);
 
             const QSize srcSize = reader.size();
             if (srcSize.isValid() && !srcSize.isEmpty()) {
@@ -79,6 +124,9 @@ private:
                 }
                 if (img.format() != QImage::Format_RGB32 && img.format() != QImage::Format_ARGB32_Premultiplied) {
                     img = img.convertToFormat(QImage::Format_RGB32);
+                }
+                if (useDiskCache && !cachedPath.isEmpty()) {
+                    img.save(cachedPath, "JPG", 88);
                 }
                 m_response->m_image = std::move(img);
             }

@@ -28,6 +28,20 @@ Rectangle {
         { label: "系统设置", icon: "settings",  badge: "settings" }
     ]
 
+    function accentForIndex(idx) {
+        if (idx === 0) return Theme.overviewAccent
+        if (idx === 2) return Theme.lockAccent
+        if (idx === 3) return Theme.settingsAccent
+        return Theme.accent
+    }
+
+    function softAccentForIndex(idx) {
+        if (idx === 0) return Theme.overviewAccentSoft
+        if (idx === 2) return Theme.lockAccentSoft
+        if (idx === 3) return Theme.settingsAccentSoft
+        return Theme.accentSoft
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
@@ -124,7 +138,7 @@ Rectangle {
                 width: parent.width
                 height: 42
                 radius: Theme.radiusMd
-                color: root.currentIndex === 2 ? Theme.lockAccentSoft : Theme.accentSoft
+                color: root.softAccentForIndex(root.currentIndex)
 
                 Behavior on y {
                     NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
@@ -138,7 +152,7 @@ Rectangle {
                     width: 4
                     height: 20
                     radius: 2
-                    color: root.currentIndex === 2 ? Theme.lockAccent : Theme.accent
+                    color: root.accentForIndex(root.currentIndex)
 
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }
@@ -158,7 +172,7 @@ Rectangle {
 
                         readonly property bool isSelected: index === root.currentIndex
                         readonly property bool isHovered: navMouse.containsMouse
-                        readonly property color itemAccent: index === 2 ? Theme.lockAccent : Theme.accent
+                        readonly property color itemAccent: root.accentForIndex(index)
                         readonly property bool channelActive: (modelData.badge === "desktop" && appController.desktopChannel.running)
                                                               || (modelData.badge === "lock" && appController.lockScreenChannel.running)
 

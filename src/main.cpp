@@ -4,6 +4,7 @@
 #include <QFont>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QImageReader>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QPixmapCache>
@@ -16,7 +17,10 @@
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName(QStringLiteral("AuraPaper"));
     QCoreApplication::setApplicationName(QStringLiteral("AuraPaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.2"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.3"));
+
+    // Allow decoding ultra-high-res / 200MB+ wallpapers (Qt 6 defaults to 128 MB)
+    QImageReader::setAllocationLimit(0);
 
     // Keep Qt Quick texture/pixmap memory footprint tightly bounded
     QPixmapCache::setCacheLimit(16384); // 16 MB
@@ -70,6 +74,7 @@ int main(int argc, char *argv[]) {
 
     engine.loadFromModule(QStringLiteral("AuraPaper"), QStringLiteral("Main"));
     engine.loadFromModule(QStringLiteral("AuraPaper"), QStringLiteral("TrayMenuPopup"));
+    engine.loadFromModule(QStringLiteral("AuraPaper"), QStringLiteral("TrayBalloonPopup"));
 
     const auto roots = engine.rootObjects();
     if (!roots.isEmpty()) {
@@ -84,6 +89,11 @@ int main(int argc, char *argv[]) {
         if (roots.size() > 1) {
             if (auto *trayWin = qobject_cast<QQuickWindow *>(roots.at(1))) {
                 controller.registerTrayPopup(trayWin);
+            }
+        }
+        if (roots.size() > 2) {
+            if (auto *balloonWin = qobject_cast<QQuickWindow *>(roots.at(2))) {
+                controller.registerTrayBalloon(balloonWin);
             }
         }
     }

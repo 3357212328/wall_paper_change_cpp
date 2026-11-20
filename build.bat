@@ -42,5 +42,5 @@ for %%F in (qsvg.dll qtiff.dll qwbmp.dll qtga.dll qicns.dll qpdf.dll) do (
 for /r "%DIST_DIR%\qml" %%T in (*.qmltypes) do del /f /q "%%T" 2>nul
 
 echo.
-echo [AuraPaper] Build & slim package succeeded: %DIST_DIR%\AuraPaper.exe
+echo [AuraPaper] Build ^& slim package succeeded: %DIST_DIR%\AuraPaper.exe
 endlocal

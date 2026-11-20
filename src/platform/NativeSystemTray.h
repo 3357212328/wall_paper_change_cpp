@@ -21,6 +21,8 @@ public:
 signals:
     void leftClicked();
     void rightClicked();
+    void systemSuspending();
+    void systemResumed();
 
 private:
     void createMessageWindow();

@@ -104,6 +104,8 @@ public:
     Q_INVOKABLE void revealImage(const QString &filePath) const;
 
     void refreshCountdownDisplay();
+    void pauseForSleep();
+    void resumeFromSleep();
 
 signals:
     void folderPathChanged();
@@ -148,6 +150,7 @@ private:
     bool m_applying = false;
     bool m_scanning = false;
     bool m_autoResumePending = false;
+    bool m_pausedForSleep = false;
 
     QString m_currentImagePath;
     QString m_currentImageUrl;
@@ -158,6 +161,7 @@ private:
     double m_progress = 0.0;
     qint64 m_cycleStartMs = 0;
     qint64 m_savedRemainingMs = -1;
+    qint64 m_sleepRemainingMs = -1;
     QElapsedTimer m_clock;
 
     WallpaperListModel m_listModel;
