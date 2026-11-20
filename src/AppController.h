@@ -53,7 +53,7 @@ public:
     void setPauseOnFullscreen(bool pause);
 
     double memoryUsageMB() const { return m_memoryUsageMB; }
-    QString appVersion() const { return QStringLiteral("1.0.3"); }
+    QString appVersion() const { return QStringLiteral("1.0.4"); }
 
     Q_INVOKABLE void showMainWindow();
     Q_INVOKABLE void hideToTray(bool showBalloonIfFirst = true);

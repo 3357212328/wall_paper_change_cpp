@@ -17,7 +17,7 @@
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName(QStringLiteral("AuraPaper"));
     QCoreApplication::setApplicationName(QStringLiteral("AuraPaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.3"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0.4"));
 
     // Allow decoding ultra-high-res / 200MB+ wallpapers (Qt 6 defaults to 128 MB)
     QImageReader::setAllocationLimit(0);
