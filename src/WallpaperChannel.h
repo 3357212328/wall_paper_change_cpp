@@ -44,8 +44,6 @@ public:
     explicit WallpaperChannel(ChannelKind kind, QObject *parent = nullptr);
     ~WallpaperChannel() override;
 
-    void setFullscreenCheckCallback(std::function<bool()> callback);
-
     void loadSettings(QSettings &settings);
     void saveSettings(QSettings &settings) const;
 
@@ -179,7 +177,6 @@ private:
     QFileSystemWatcher m_watcher;
 
     std::atomic<quint64> m_scanGeneration{0};
-    std::function<bool()> m_fullscreenCheck;
 };
 
 } // namespace AuraPaper

@@ -15,7 +15,6 @@ public:
     static void activatePopupWindow(QWindow *window);
     static double getProcessWorkingSetMB();
     static void trimProcessMemory();
-    static bool isFullscreenAppRunning();
 
     static void revealFileInExplorer(const QString &filePath);
     static void openFolderInExplorer(const QString &folderPath);

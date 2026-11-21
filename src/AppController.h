@@ -22,7 +22,6 @@ class AppController : public QObject {
     Q_PROPERTY(bool autoStart READ autoStart WRITE setAutoStart NOTIFY autoStartChanged)
     Q_PROPERTY(bool startMinimized READ startMinimized WRITE setStartMinimized NOTIFY startMinimizedChanged)
     Q_PROPERTY(bool minimizeToTrayOnClose READ minimizeToTrayOnClose WRITE setMinimizeToTrayOnClose NOTIFY minimizeToTrayOnCloseChanged)
-    Q_PROPERTY(bool pauseOnFullscreen READ pauseOnFullscreen WRITE setPauseOnFullscreen NOTIFY pauseOnFullscreenChanged)
     Q_PROPERTY(double memoryUsageMB READ memoryUsageMB NOTIFY memoryUsageChanged)
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
 
@@ -49,11 +48,8 @@ public:
     bool minimizeToTrayOnClose() const { return m_minimizeToTrayOnClose; }
     void setMinimizeToTrayOnClose(bool minimize);
 
-    bool pauseOnFullscreen() const { return m_pauseOnFullscreen; }
-    void setPauseOnFullscreen(bool pause);
-
     double memoryUsageMB() const { return m_memoryUsageMB; }
-    QString appVersion() const { return QStringLiteral("1.0.5"); }
+    QString appVersion() const { return QStringLiteral("1.0.6"); }
 
     Q_INVOKABLE void showMainWindow();
     Q_INVOKABLE void hideToTray(bool showBalloonIfFirst = true);
@@ -75,7 +71,6 @@ signals:
     void autoStartChanged();
     void startMinimizedChanged();
     void minimizeToTrayOnCloseChanged();
-    void pauseOnFullscreenChanged();
     void memoryUsageChanged();
     void toastMessage(const QString &message, bool isError);
     void requestWindowReveal();
@@ -98,7 +93,6 @@ private:
     bool m_autoStart = false;
     bool m_startMinimized = true;
     bool m_minimizeToTrayOnClose = true;
-    bool m_pauseOnFullscreen = true;
     bool m_trayHintShown = false;
     bool m_quitting = false;
 

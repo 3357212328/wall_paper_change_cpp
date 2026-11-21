@@ -28,12 +28,6 @@ AppController::AppController(QObject *parent)
       m_settings(configFilePath(), QSettings::IniFormat),
       m_desktopChannel(ChannelKind::Desktop, this),
       m_lockScreenChannel(ChannelKind::LockScreen, this) {
-    auto fullscreenGuard = [this]() -> bool {
-        return m_pauseOnFullscreen && WindowsUtils::isFullscreenAppRunning();
-    };
-    m_desktopChannel.setFullscreenCheckCallback(fullscreenGuard);
-    m_lockScreenChannel.setFullscreenCheckCallback(fullscreenGuard);
-
     // Debounced config persistence
     m_saveDebounceTimer.setSingleShot(true);
     m_saveDebounceTimer.setInterval(400);
@@ -248,15 +242,6 @@ void AppController::setMinimizeToTrayOnClose(bool minimize) {
     scheduleSaveSettings();
 }
 
-void AppController::setPauseOnFullscreen(bool pause) {
-    if (m_pauseOnFullscreen == pause) {
-        return;
-    }
-    m_pauseOnFullscreen = pause;
-    emit pauseOnFullscreenChanged();
-    scheduleSaveSettings();
-}
-
 void AppController::showMainWindow() {
     m_trimDelayTimer.stop();
     if (!m_window) {
@@ -384,7 +369,6 @@ void AppController::loadAllSettings() {
     m_darkTheme = m_settings.value(QStringLiteral("darkTheme"), true).toBool();
     m_startMinimized = m_settings.value(QStringLiteral("startMinimized"), true).toBool();
     m_minimizeToTrayOnClose = m_settings.value(QStringLiteral("minimizeToTrayOnClose"), true).toBool();
-    m_pauseOnFullscreen = m_settings.value(QStringLiteral("pauseOnFullscreen"), true).toBool();
     m_settings.endGroup();
 
     // Always trust Windows Registry as source of truth for AutoStart
@@ -403,7 +387,6 @@ void AppController::saveAllSettings() {
     m_settings.setValue(QStringLiteral("darkTheme"), m_darkTheme);
     m_settings.setValue(QStringLiteral("startMinimized"), m_startMinimized);
     m_settings.setValue(QStringLiteral("minimizeToTrayOnClose"), m_minimizeToTrayOnClose);
-    m_settings.setValue(QStringLiteral("pauseOnFullscreen"), m_pauseOnFullscreen);
     m_settings.endGroup();
 
     m_desktopChannel.saveSettings(m_settings);

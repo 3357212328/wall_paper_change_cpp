@@ -310,35 +310,6 @@ Flickable {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
-                    ColumnLayout {
-                        spacing: 2
-                        Text {
-                            text: "全屏游戏 / 影音播放时自动暂停更换"
-                            color: Theme.textPrimary
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 13
-                            font.weight: Font.DemiBold
-                        }
-                        Text {
-                            text: "检测到 DirectX 全屏游戏或演示文稿时跳过本次切换，杜绝画面掉帧"
-                            color: Theme.textSecondary
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                        }
-                    }
-                    Item { Layout.fillWidth: true }
-                    AnimatedToggle {
-                        checked: appController.pauseOnFullscreen
-                        activeColor: Theme.accent
-                        onToggled: function(v) { appController.pauseOnFullscreen = v }
-                    }
-                }
-
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
 
                     ColumnLayout {
                         Layout.fillWidth: true

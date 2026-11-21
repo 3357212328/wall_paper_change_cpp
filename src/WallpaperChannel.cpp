@@ -87,10 +87,6 @@ WallpaperChannel::~WallpaperChannel() {
     m_switchTimer.stop();
 }
 
-void WallpaperChannel::setFullscreenCheckCallback(std::function<bool()> callback) {
-    m_fullscreenCheck = std::move(callback);
-}
-
 QString WallpaperChannel::title() const {
     return m_kind == ChannelKind::Desktop ? QStringLiteral("桌面壁纸") : QStringLiteral("锁屏壁纸");
 }
@@ -794,11 +790,6 @@ void WallpaperChannel::resumeFromSleep() {
 
 void WallpaperChannel::onSwitchTimerTimeout() {
     if (!m_running || m_pausedForSleep) {
-        return;
-    }
-    if (m_fullscreenCheck && m_fullscreenCheck()) {
-        // Fullscreen app or game running -> quietly postpone one cycle
-        restartSwitchTimer();
         return;
     }
 

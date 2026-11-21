@@ -193,50 +193,6 @@ Flickable {
                     }
                 }
             }
-
-            // KPI 4: Fullscreen Auto-Pause Toggle
-            CardContainer {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 86
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 14
-                    spacing: 10
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        Text {
-                            text: "全屏智能暂停"
-                            color: Theme.textSecondary
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                        }
-                        Text {
-                            text: appController.pauseOnFullscreen ? "保护中" : "已关闭"
-                            color: appController.pauseOnFullscreen ? Theme.accent : Theme.textPrimary
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 15
-                            font.weight: Font.Bold
-                        }
-                        Text {
-                            text: "游戏 / 观影时不打扰"
-                            color: Theme.textMuted
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-
-                    AnimatedToggle {
-                        checked: appController.pauseOnFullscreen
-                        activeColor: Theme.accent
-                        onToggled: function(val) { appController.pauseOnFullscreen = val }
-                    }
-                }
-            }
         }
 
         // Section Heading

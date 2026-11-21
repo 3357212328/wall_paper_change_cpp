@@ -134,14 +134,6 @@ void WindowsUtils::trimProcessMemory() {
                              static_cast<SIZE_T>(-1));
 }
 
-bool WindowsUtils::isFullscreenAppRunning() {
-    QUERY_USER_NOTIFICATION_STATE state = QUNS_ACCEPTS_NOTIFICATIONS;
-    if (SUCCEEDED(SHQueryUserNotificationState(&state))) {
-        return state == QUNS_BUSY || state == QUNS_RUNNING_D3D_FULL_SCREEN;
-    }
-    return false;
-}
-
 void WindowsUtils::revealFileInExplorer(const QString &filePath) {
     if (filePath.isEmpty()) {
         return;
